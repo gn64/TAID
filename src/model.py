@@ -2,7 +2,7 @@ from typing import Dict, Any
 import torch
 from torch import Tensor
 import lightning as L
-from transformers import get_scheduler, GenerationConfig, AutoModelForCausalLM
+from transformers import get_scheduler,AutoConfig, GenerationConfig,BitsAndBytesConfig, AutoModelForCausalLM
 from src.metrics import compute_metrics
 from src.loss import get_loss_fn, LossOutput
 from src.sampler import get_sampler
@@ -41,14 +41,25 @@ class KDForLM(L.LightningModule):
         self.student_model = AutoModelForCausalLM.from_pretrained(
             self.args.student_model,
             torch_dtype=torch.bfloat16,
+            trust_remote_code=True,
             attn_implementation="flash_attention_2",
         )
+        self.student_model.gradient_checkpointing_enable()
         self.student_model.resize_token_embeddings(len(self.tokenizer))
+        teacher_quant_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_compute_dtype=torch.bfloat16,   # 4bit量子化での演算をbfloat16にする
+            bnb_4bit_use_double_quant=False,          # 必要に応じて
+            bnb_4bit_quant_type="nf4",               # デフォルトはnf4など
+        )
         self.teacher_model = AutoModelForCausalLM.from_pretrained(
             self.args.teacher_model,
-            torch_dtype=torch.bfloat16,
+            quantization_config=teacher_quant_config,
+            trust_remote_code=True,
             attn_implementation="flash_attention_2",
         )
+        self.teacher_model.eval()
+        self.teacher_model.requires_grad_(False)
         self.teacher_model.resize_token_embeddings(len(self.tokenizer))
 
     def forward(self, batch: Dict[str, Tensor], **kwargs) -> LossOutput:

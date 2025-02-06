@@ -63,3 +63,7 @@ To cite our work, you can use the following:
       url           = {https://arxiv.org/abs/2501.16937}
 }
 ```
+
+## 現在のコード例
+
+CUDA_VISIBLE_DEVICES=0,1,2,3 python train.py --student_model Qwen/Qwen2.5-1.5B-Instruct --teacher_model Qwen/Qwen2.5-32B-Instruct --data_path data/magipie/qwen2.5-32b --output_dir logs/qwen32-1.5-magipie_2 --batch_size 1 --num_epochs 100 --loss_type taid --taid_t_start 0.4 --taid_alpha 5.e-4 --taid_beta 0.99 --accumulate_grad_batches 4

@@ -102,7 +102,7 @@ def load_tokenizer(tokenizer_path: str, **tokenizer_kwargs):
     if "phi-3" in tokenizer_path.lower():
         tokenizer_kwargs["pad_token"] = "<unk>"
         tokenizer_kwargs["padding_side"] = "right"
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, **tokenizer_kwargs)
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path,trust_remote_code=True, **tokenizer_kwargs)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     return tokenizer
